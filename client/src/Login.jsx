@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import axios from "axios";
+import api from "./api";
 import ChatbotWidget from "./components/ChatbotWidget";
 import "./Auth.css";
 
@@ -12,57 +11,44 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  axios.defaults.withCredentials = true;
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    axios
-      .post("http://localhost:3001/login", { email, password })
+    api
+      .post("auth/login", { email, password })
       .then((result) => {
-        console.log("Login result:", result);
-        
-        if (result.data === "Success") {
+        if (result.data?.success) {
           navigate("/home");
-        } else if (result.data === "The password is incorrect") {
-          setError("Incorrect password. Please try again.");
-          setLoading(false);
-        } else if (result.data === "No record found") {
-          setError("No account found with this email.");
-          setLoading(false);
         } else {
-          setError("Login failed. Please try again.");
+          setError(result.data?.message || "Invalid email or password.");
           setLoading(false);
         }
       })
       .catch((err) => {
         console.error("Login error:", err);
-        setError("An error occurred. Please try again.");
+        setError(err.response?.data?.message || "Authentication failed. Please check credentials.");
         setLoading(false);
       });
   };
 
   return (
     <div className="auth-page">
-      {/* Floating Chatbot Widget */}
       <ChatbotWidget />
-      {/* Header */}
       <header className="auth-header">
         <div className="auth-logo" onClick={() => navigate("/")}>
-          SafeNet
+          🛡️ Safe<span className="logo-accent">Net</span>
         </div>
         <button className="auth-back-btn" onClick={() => navigate("/")}>
           Back to Home
         </button>
       </header>
 
-      {/* Main Content */}
       <div className="auth-content">
         <div className="auth-container">
+          <div className="auth-badge-pill">OPERATOR CLEARANCE</div>
           <h2 className="auth-title">Welcome Back</h2>
-          <p className="auth-subtitle">Login to access your secure dashboard</p>
+          <p className="auth-subtitle">Authenticate to access your cyber command dashboard</p>
 
           {error && <div className="auth-error-message">{error}</div>}
 
@@ -73,9 +59,10 @@ function Login() {
                 type="email"
                 name="email"
                 className="form-input"
-                placeholder="Enter your email"
+                placeholder="analyst@safenet.com"
                 autoComplete="email"
                 required
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
@@ -89,6 +76,7 @@ function Login() {
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
@@ -100,13 +88,13 @@ function Login() {
             </div>
 
             <button type="submit" className="auth-submit-btn" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Verifying Credentials..." : "Authenticate & Sign In"}
             </button>
 
             <div className="auth-divider">OR</div>
 
             <p className="auth-link-text">
-              Don't have an account?{" "}
+              Request new security clearance?{" "}
               <Link to="/register" className="auth-link">
                 Create Account
               </Link>

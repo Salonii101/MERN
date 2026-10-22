@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+﻿import React, { useState, useRef } from "react";
+import { CloudUploadIcon } from "./Icons";
 import "./DragDropUpload.css";
 
 const DragDropUpload = ({ onFileSelect, accept = "*" }) => {
@@ -61,11 +62,13 @@ const DragDropUpload = ({ onFileSelect, accept = "*" }) => {
         style={{ display: "none" }}
       />
       <div className="drag-drop-content">
-        <div className="drag-drop-icon">📁</div>
+        <div className="drag-drop-icon">
+          <CloudUploadIcon size={34} color="#06b6d4" />
+        </div>
         <p className="drag-drop-text">
-          {isDragging ? "Drop file here" : "Drag & drop or click to upload"}
+          {isDragging ? "Drop file to inspect" : "Drag & drop file or click to browse"}
         </p>
-        <p className="drag-drop-subtext">Supports all file types</p>
+        <p className="drag-drop-subtext">All document, executable, and archive formats supported</p>
       </div>
     </div>
   );

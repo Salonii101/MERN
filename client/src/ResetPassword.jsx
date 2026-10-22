@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import ChatbotWidget from "./components/ChatbotWidget";
+import api from "./api";
 import "./Auth.css";
 
 function ResetPassword() {
@@ -9,10 +9,9 @@ function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { id, token } = useParams();
-
-  axios.defaults.withCredentials = true;
+  const { token } = useParams();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,42 +28,44 @@ function ResetPassword() {
       return;
     }
 
-    axios
-      .post(`http://localhost:3001/reset-password/${id}/${token}`, { password })
+    setLoading(true);
+
+    api
+      .put(`/auth/password/reset/${token}`, {
+        password,
+        confirmPassword,
+      })
       .then((result) => {
-        console.log(result);
-        if (result.data.Status === "Success") {
+        if (result.data?.success || result.data?.Status) {
           setMessage("Password updated successfully! Redirecting to login...");
           setTimeout(() => navigate("/login"), 2000);
         } else {
-          setError("Token expired or password update failed");
+          setError(result.data?.message || "Token expired or password update failed");
         }
       })
       .catch((err) => {
-        console.log(err);
-        setError("An error occurred. Please try again.");
-      });
+        console.error("Reset password error:", err);
+        setError(err.response?.data?.message || "An error occurred. Please request a new reset link.");
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
     <div className="auth-page">
-      {/* Floating Chatbot Widget */}
       <ChatbotWidget />
-      {/* Header */}
       <header className="auth-header">
         <div className="auth-logo" onClick={() => navigate("/")}>
-          SafeNet
+          🛡️ Safe<span className="logo-accent">Net</span>
         </div>
         <button className="auth-back-btn" onClick={() => navigate("/login")}>
           Back to Login
         </button>
       </header>
 
-      {/* Main Content */}
       <div className="auth-content">
         <div className="auth-container">
           <h2 className="auth-title">Reset Password</h2>
-          <p className="auth-subtitle">Enter your new password below</p>
+          <p className="auth-subtitle">Define your new cryptographic security credentials</p>
 
           {message && <div className="auth-success-message">{message}</div>}
           {error && <div className="auth-error-message">{error}</div>}
@@ -79,6 +80,7 @@ function ResetPassword() {
                 placeholder="Enter new password"
                 autoComplete="new-password"
                 required
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
@@ -92,13 +94,20 @@ function ResetPassword() {
                 placeholder="Confirm new password"
                 autoComplete="new-password"
                 required
+                value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
 
-            <button type="submit" className="auth-submit-btn">
-              Update Password
+            <button type="submit" className="auth-submit-btn" disabled={loading}>
+              {loading ? "Updating Credentials..." : "Update Password"}
             </button>
+
+            <p className="auth-link-text">
+              <Link to="/login" className="auth-link">
+                Back to Sign In
+              </Link>
+            </p>
           </form>
         </div>
       </div>

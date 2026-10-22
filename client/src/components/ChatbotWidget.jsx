@@ -1,5 +1,13 @@
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+﻿import React, { useState, useEffect, useRef } from "react";
+import api from "../api";
+import {
+  BotIcon,
+  SendIcon,
+  LockIcon,
+  ChartIcon,
+  AlertTriangleIcon,
+  ShieldCheckIcon
+} from "./Icons";
 import "./ChatbotWidget.css";
 
 function ChatbotWidget() {
@@ -21,27 +29,22 @@ function ChatbotWidget() {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendPrompt = async (promptText) => {
+    if (!promptText.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    const userMessage = promptText.trim();
     const newMessage = { sender: "user", text: userMessage };
-    
-    // Clear input immediately
+
     setInput("");
-    
-    // Add user message
     setMessages((prev) => [...prev, newMessage]);
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3001/api/chatbot", {
+      const res = await api.post("/chatbot", {
         message: userMessage,
       });
-      
-      console.log("Chatbot response:", res.data);
-      
-      if (res.data.success && res.data.reply) {
+
+      if (res.data?.success && res.data?.reply) {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: res.data.reply },
@@ -49,7 +52,7 @@ function ChatbotWidget() {
       } else {
         setMessages((prev) => [
           ...prev,
-          { sender: "bot", text: "⚠️ No response received from AI." },
+          { sender: "bot", text: "<p>No response received from AI Sentinel.</p>" },
         ]);
       }
     } catch (err) {
@@ -58,7 +61,7 @@ function ChatbotWidget() {
         ...prev,
         {
           sender: "bot",
-          text: "⚠️ Error getting response. Please try again later.",
+          text: "<p>Sentinel offline or rate limit reached. Please try again.</p>",
         },
       ]);
     } finally {
@@ -72,16 +75,22 @@ function ChatbotWidget() {
       <button
         className={`chatbot-float-btn ${isOpen ? "active" : ""}`}
         onClick={toggleChatbot}
-        aria-label="Toggle AI Assistant"
+        aria-label="Toggle AI Sentinel"
       >
-        {isOpen ? "✕" : "🤖"}
+        {isOpen ? <span>✕</span> : <BotIcon size={24} color="#ffffff" />}
       </button>
 
       {/* Chatbot Side Panel */}
       <div className={`chatbot-panel ${isOpen ? "open" : ""}`}>
         <div className="chatbot-panel-header">
-          <h3>AI Assistant</h3>
-          <button className="close-panel-btn" onClick={toggleChatbot}>
+          <div className="panel-header-info">
+            <span className="panel-dot"></span>
+            <div>
+              <h3>AI Sentinel Copilot</h3>
+              <small>Gemini 3.6 &bull; Cyber Threat Intel</small>
+            </div>
+          </div>
+          <button className="close-panel-btn" onClick={toggleChatbot} aria-label="Close">
             ✕
           </button>
         </div>
@@ -89,8 +98,26 @@ function ChatbotWidget() {
         <div className="chatbot-panel-messages">
           {messages.length === 0 ? (
             <div className="welcome-message">
-              <p>👋 Hello! I'm your cybersecurity AI assistant.</p>
-              <p>Ask me anything about security, threats, or best practices!</p>
+              <span className="welcome-icon">
+                <ShieldCheckIcon size={28} color="#22d3ee" />
+              </span>
+              <h4>SafeNet Cyber Sentinel</h4>
+              <p>Ask about threat analysis, CVEs, AES encryption, or incident playbooks.</p>
+
+              <div className="widget-suggestion-chips">
+                <button onClick={() => sendPrompt("How does AES-256-GCM protect files?")}>
+                  <LockIcon size={14} />
+                  <span>AES-256-GCM Security</span>
+                </button>
+                <button onClick={() => sendPrompt("What does Shannon Entropy indicate in malware detection?")}>
+                  <ChartIcon size={14} />
+                  <span>Explain Shannon Entropy</span>
+                </button>
+                <button onClick={() => sendPrompt("Give me a fast incident response playbook for ransomware.")}>
+                  <AlertTriangleIcon size={14} />
+                  <span>Ransomware Response</span>
+                </button>
+              </div>
             </div>
           ) : (
             <>
@@ -121,19 +148,24 @@ function ChatbotWidget() {
         <div className="chatbot-panel-input">
           <input
             type="text"
-            placeholder="Ask about cybersecurity..."
+            placeholder="Ask AI Sentinel..."
             className="panel-chat-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !isLoading && sendMessage()}
+            onKeyDown={(e) => e.key === "Enter" && !isLoading && sendPrompt(input)}
             disabled={isLoading}
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendPrompt(input)}
             className="panel-send-btn"
             disabled={isLoading || !input.trim()}
+            aria-label="Send"
           >
-            {isLoading ? "..." : "➤"}
+            {isLoading ? (
+              <span className="sending-dots"><span /><span /><span /></span>
+            ) : (
+              <SendIcon size={15} color="#ffffff" />
+            )}
           </button>
         </div>
       </div>
